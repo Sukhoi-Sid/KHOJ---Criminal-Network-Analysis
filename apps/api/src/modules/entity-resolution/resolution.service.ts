@@ -3,7 +3,7 @@ import { AuditAction, AuditResourceType, Permission, type EntityType, type Entit
 import { prisma } from '../../core/db';
 import { eventBus } from '../../core/domain-events';
 import { NotFoundError, ValidationError } from '../../core/errors';
-import { assertCasePermission, assertSourceAccess, type CaseActor } from '../auth/policies';
+import { assertDerivedCasePermission, type CaseActor } from '../auth/policies';
 import { auditService } from '../audit/audit.service';
 import { collectSourceRecords, stableDigest, toJson } from './integration';
 import { candidatePairs, entityResolvers, RESOLUTION_RULES, type MatchRecord } from './resolvers';
@@ -16,10 +16,7 @@ const recordInclude = { evidenceRecord: { include: { provenance: true } } } as c
 
 export class EntityResolutionService {
   private async access(caseId: string, actor: CaseActor, permission: Permission) {
-    await assertCasePermission(caseId,actor,permission);
-    // Fail closed for the whole derived view: otherwise a merged entity can leak a restricted source through a permitted member.
-    const sources = await prisma.intelligenceRequest.findMany({ where: { caseId, response: { isNot: null } }, select: { sourceId: true }, distinct: ['sourceId'] });
-    for (const source of sources) await assertSourceAccess(source.sourceId,actor);
+    await assertDerivedCasePermission(caseId,actor,permission);
   }
   private async locked<T>(caseId: string, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(async tx => { await tx.$queryRaw`SELECT id FROM cases WHERE id = ${caseId} FOR UPDATE`; return work(tx); }, { timeout: 60_000, maxWait: 20_000 });

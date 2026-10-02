@@ -77,6 +77,7 @@ Future implementations plug in without changing case platform or brain:
 | 2026-09 | D1 | Neo4j selected over PostgreSQL-only graph tables |
 | 2026-09 | D2–D6 | Blueprint decisions locked at freeze |
 | 2026-09 | D7 | PDF/text MVP with extensible document boundary clarified |
+| 2026-09 | D9 | Original Phase 5 and Phase 6 approved as one combined delivery with no scope reduction |
 
 ---
 
@@ -91,6 +92,14 @@ audit service and evidence-store. A gap is derived context, not evidence or perm
 Only an independent, assigned supervisor can authorize a reviewed request. Mock data remains off-chain,
 marked synthetic and tier4/unverified. The user-approved lifecycle refinement and API are documented in
 [Phase 3 status](PHASE-3-STATUS.md); this leaves Phases 4–9 untouched.
+
+## D9 — Merged Phase 5+6 (2026-09-21)
+
+The original Phase 5 and Phase 6 are implemented as one combined **Merged Phase 5+6** with no scope reduction.
+This preserves the frozen pipeline and modular-monolith deployment: evidence and PostgreSQL are authoritative;
+Neo4j is a derived, rebuildable analytical view. The implementation reuses Phase 1–4 canonical entities, auth,
+case ABAC, audit, provenance, domain events and case intelligence state. Application-level graph algorithms provide
+the documented fallback when Neo4j GDS is unavailable. This decision does not authorize or begin Phase 7–9.
 
 ## Change control procedure
 

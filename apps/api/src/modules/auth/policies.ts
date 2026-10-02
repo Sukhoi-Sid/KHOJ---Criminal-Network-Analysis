@@ -39,6 +39,13 @@ export async function assertSourceAccess(sourceId: string, actor: CaseActor) {
   }
 }
 
+/** A combined derived view can expose restricted sources through another member. */
+export async function assertDerivedCasePermission(caseId:string,actor:CaseActor,permission:Permission) {
+  await assertCasePermission(caseId,actor,permission);
+  const sources=await prisma.intelligenceRequest.findMany({where:{caseId,response:{isNot:null}},select:{sourceId:true},distinct:['sourceId']});
+  for(const source of sources)await assertSourceAccess(source.sourceId,actor);
+}
+
 /**
  * ABAC rule (Blueprint §10): a user may access a case only if they hold a
  * `CaseAssignment` row for it — regardless of platform role. `admin` has no

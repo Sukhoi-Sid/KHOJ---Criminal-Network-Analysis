@@ -1,6 +1,7 @@
 import { createApp } from './app';
 import { env } from './core/env';
 import { prisma } from './core/db';
+import { closeGraphDriver } from './core/neo4j';
 
 async function main() {
   const app = createApp();
@@ -15,6 +16,7 @@ async function main() {
     console.log(`Received ${signal}, shutting down...`);
     server.close();
     await prisma.$disconnect();
+    await closeGraphDriver();
     process.exit(0);
   };
 

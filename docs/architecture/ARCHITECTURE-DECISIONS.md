@@ -48,6 +48,7 @@
 | 2026-09 | AD-FLOW | Linear pipeline replaced with explicit iterative loop |
 | 2026-09 | AD-DEPLOY | Microservices-by-default replaced with modular monolith for MVP |
 | 2026-09 | AD-04 | Graph clarified as derived analytical representation, not authoritative |
+| 2026-09 | AD-BUILD | Approved Phase 5 and Phase 6 delivered together with full original scope; Phase 7 remains separate |
 
 ---
 

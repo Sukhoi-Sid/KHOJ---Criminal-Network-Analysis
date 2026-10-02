@@ -4,6 +4,7 @@ import { DocumentIntelligenceEvents } from '../document-intelligence/events';
 import type { ExtractionCompletedPayload } from '../document-intelligence/events';
 import { Prisma } from '@prisma/client';
 import { ResolutionEvents } from '../entity-resolution/events';
+import { BrainEvents } from '../intelligence-brain/events';
 
 // Case platform remains the only owner of the versioned state. Row locking
 // prevents document and resolution events from overwriting each other's sections.
@@ -36,6 +37,16 @@ export function registerCaseIntelligenceStateSubscriber(): void {
     return;
   }
   subscribed = true;
+
+  eventBus.subscribe(BrainEvents.COMPLETED,{
+    async handle(event:DomainEvent) {
+      await updateSummary(String(event.payload.caseId),summary=>{
+        const previous=summary.brain as {sequence?:number;signals?:number}|undefined;
+        if((previous?.sequence??-1)>=Number(event.payload.sequence))return null;
+        return {...summary,brain:{...previous,...event.payload,signals:event.payload.signals??previous?.signals??null,completedAt:new Date(event.timestamp).toISOString(),derived:true}};
+      });
+    },
+  });
 
   eventBus.subscribe(ResolutionEvents.COMPLETED, {
     async handle(event: DomainEvent) {

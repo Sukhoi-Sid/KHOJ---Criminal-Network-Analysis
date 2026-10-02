@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  NEO4J_URI: z.string().default('bolt://127.0.0.1:7687'),
+  NEO4J_USERNAME: z.string().default('neo4j'),
+  NEO4J_PASSWORD: z.string().default('sih_graph_dev_password'),
+  NEO4J_DATABASE: z.string().default('neo4j'),
   API_PORT: z.coerce.number().int().positive().default(3001),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),

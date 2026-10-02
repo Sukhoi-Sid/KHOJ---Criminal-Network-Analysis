@@ -1,4 +1,5 @@
 // ─── Roles & Permissions ───────────────────────────────────────────────────
+export * from './brain';
 
 export enum UserRole {
   INVESTIGATOR = 'investigator',
@@ -27,10 +28,14 @@ export enum Permission {
   SOURCE_CYBER = 'source:cyber',
   ENTITY_READ = 'entity:read',
   ENTITY_RESOLVE = 'entity:resolve',
+  BRAIN_READ = 'brain:read',
+  BRAIN_EXECUTE = 'brain:execute',
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.INVESTIGATOR]: [
+    Permission.BRAIN_READ,
+    Permission.BRAIN_EXECUTE,
     Permission.ENTITY_READ,
     Permission.ENTITY_RESOLVE,
     Permission.CASE_CREATE,
@@ -48,6 +53,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.SOURCE_CYBER,
   ],
   [UserRole.SUPERVISOR]: [
+    Permission.BRAIN_READ,
+    Permission.BRAIN_EXECUTE,
     Permission.ENTITY_READ,
     Permission.ENTITY_RESOLVE,
     Permission.CASE_CREATE,
@@ -115,6 +122,9 @@ export enum AuditAction {
   ENTITY_INTEGRATE = 'entity_integrate',
   ENTITY_READ = 'entity_read',
   ENTITY_REVIEW = 'entity_review',
+  GRAPH_SYNC = 'graph_sync',
+  BRAIN_ANALYZE = 'brain_analyze',
+  BRAIN_READ = 'brain_read',
 }
 
 export enum AuditResourceType {
@@ -128,6 +138,8 @@ export enum AuditResourceType {
   INTELLIGENCE_REQUEST = 'intelligence_request',
   CANONICAL_ENTITY = 'canonical_entity',
   RESOLUTION_CANDIDATE = 'resolution_candidate',
+  CASE_GRAPH = 'case_graph',
+  ANALYTICAL_SIGNAL = 'analytical_signal',
 }
 
 // ─── Evidence Store ────────────────────────────────────────────────────────

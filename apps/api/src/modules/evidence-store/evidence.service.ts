@@ -78,6 +78,14 @@ export class EvidenceStoreService {
     return JSON.parse(buffer.toString('utf8')) as unknown;
   }
 
+  /** Reuse evidence hashing to validate cached document-derived intelligence. */
+  async verifyDocumentBlob(document: { blobPath: string; contentHash: string }): Promise<void> {
+    let buffer: Buffer;
+    try { buffer = await readFile(document.blobPath); }
+    catch { throw new FileError('Document evidence unavailable'); }
+    if (this.hash(buffer) !== document.contentHash) throw new FileError('Document evidence integrity mismatch');
+  }
+
   private hash(buffer: Buffer): string {
     return createHash('sha256').update(buffer).digest('hex');
   }

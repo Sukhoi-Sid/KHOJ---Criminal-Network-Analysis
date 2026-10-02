@@ -488,10 +488,16 @@ Do not over-engineer multilingual OCR in MVP; preserve interface and provenance 
 
 ## Change Control
 
-**Phase 4 implementation status (2026-09-18):** The existing `entity-resolution` boundary now implements
+**Phase 4 implementation status (2026-09-18):** The existing `entity-resolution` boundary implements
 source normalization, type-specific candidate blocking/comparison, canonical case entities, reversible accept/reject
 review, source provenance and versioned case-state summaries. It reuses Phase 1–3 auth, audit, evidence store,
 source adapters, Prisma client and event bus. All 107 tests pass. This is a status mapping, not a change to the frozen
-architecture or phase order. See [Phase 4 implementation and rules](PHASE-4-STATUS.md). Phase 5 has not started.
+architecture or phase order. See [Phase 4 implementation and rules](PHASE-4-STATUS.md).
+
+**Merged Phase 5+6 implementation status (2026-09-21):** The approved combined delivery implements the complete
+original Phase 5 and Phase 6 scope without changing their architecture or order. The `intelligence-brain`,
+`graph-builder`, and `analytics` boundaries reuse Phase 1–4 evidence, canonical entities, auth, audit, provenance,
+events and case state. PostgreSQL persists derived relationship/signal metadata and Neo4j remains a rebuildable,
+case-scoped analytical projection. See [Merged Phase 5+6 status](MERGED-PHASE-5-6-STATUS.md). Phases 7–9 have not started.
 
 Modifications require explicit review. See [IMPLEMENTATION-DECISIONS.md](./IMPLEMENTATION-DECISIONS.md).

@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { prisma } from '../src/core/db';
 import { hashPassword } from '../src/modules/auth/password';
@@ -83,6 +84,23 @@ async function main() {
     });
     console.log(`Extracted ${mentions.length} mentions from the synthetic FIR.`);
   } else {
+    // An interrupted local reset can leave the seeded metadata while its
+    // synthetic fixture blob is absent. Restore only this repository-owned
+    // fixture, and only when its bytes exactly match the persisted hash.
+    try {
+      await readFile(existingDoc.blobPath);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      const fixturePath = path.join(__dirname, 'fixtures', 'synthetic-fir-operation-crosslink.txt');
+      const buffer = await readFile(fixturePath);
+      const fixtureHash = createHash('sha256').update(buffer).digest('hex');
+      if (fixtureHash !== existingDoc.contentHash) {
+        throw new Error('Synthetic FIR fixture does not match the persisted evidence hash');
+      }
+      await mkdir(path.dirname(existingDoc.blobPath), { recursive: true });
+      await writeFile(existingDoc.blobPath, buffer, { flag: 'wx' });
+      console.log('Restored missing synthetic FIR blob from its hash-matched fixture.');
+    }
     console.log('Synthetic FIR already uploaded for this case, skipping.');
   }
 

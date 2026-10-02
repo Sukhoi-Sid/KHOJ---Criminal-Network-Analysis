@@ -9,11 +9,12 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "test": "tsx scripts/prepare-test-db.ts && vitest run",
+    "test": "tsx scripts/prepare-test-db.ts && tsx scripts/run-test-files.ts",
     "test:prepare": "tsx scripts/prepare-test-db.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.check.json",
     "demo:phase3": "tsx prisma/demo-phase3.ts",
-    "demo:phase4": "tsx prisma/demo-phase4.ts"
+    "demo:phase4": "tsx prisma/demo-phase4.ts",
+    "demo:merged": "tsx prisma/demo-merged.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",
@@ -25,6 +26,7 @@
     "express-async-errors": "^3.1.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "neo4j-driver": "^6.2.0",
     "pdf-parse": "^1.1.1",
     "uuid": "^11.0.5",
     "zod": "^3.24.1"

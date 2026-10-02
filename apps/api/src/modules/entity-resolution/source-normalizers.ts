@@ -33,6 +33,8 @@ export const returnedDataNormalizers = new Map<string, IReturnedDataNormalizer>(
     ...value(MentionType.VEHICLE,row,'registration'),
     ...value(MentionType.PERSON,row,'registeredOwner',{ ...identityAttributes(row), vehicle: row.registration }),
   ] }],
-  ['location', { normalize: row => [...value(MentionType.LOCATION,row,'location')] }],
+  ['location', { normalize: row => [...value(MentionType.LOCATION,row,'location'),
+    ...value(MentionType.PERSON,row,'observedPerson',identityAttributes(row)),
+    ...value(MentionType.PHONE,row,'phone'),...value(MentionType.VEHICLE,row,'vehicle')] }],
   ['cyber', { normalize: row => [...value(MentionType.PHONE,row,'contact'), ...value(MentionType.CASE_IDENTIFIER,row,'complaintRef')] }],
 ]);

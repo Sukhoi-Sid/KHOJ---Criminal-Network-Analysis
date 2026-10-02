@@ -41,6 +41,7 @@ model User {
   authorizations     IntelligenceAuthorization[]
   requestTransitions IntelligenceTransition[]
   resolutionHistory  ResolutionHistory[]
+  analysisRuns       AnalysisRun[]
 
   @@map("users")
 }
@@ -92,6 +93,11 @@ model Case {
   canonicalEntities    CanonicalEntity[]
   resolutionCandidates ResolutionCandidate[]
   resolutionHistory    ResolutionHistory[]
+  relationships        DerivedRelationship[]
+  graphSync            GraphSyncState?
+  analysisRuns         AnalysisRun[]
+  analyticalSignals    AnalyticalSignal[]
+  brainEvents          BrainEvent[]
 
   @@map("cases")
 }
@@ -149,6 +155,9 @@ enum AuditAction {
   entity_integrate
   entity_read
   entity_review
+  graph_sync
+  brain_analyze
+  brain_read
 }
 
 enum AuditResourceType {
@@ -162,6 +171,8 @@ enum AuditResourceType {
   intelligence_request
   canonical_entity
   resolution_candidate
+  case_graph
+  analytical_signal
 }
 
 model AuditEvent {
@@ -564,18 +575,20 @@ model NormalizedSourceRecord {
 }
 
 model CanonicalEntity {
-  id               String             @id @default(uuid())
+  id               String                @id @default(uuid())
   caseId           String
-  case             Case               @relation(fields: [caseId], references: [id])
+  case             Case                  @relation(fields: [caseId], references: [id])
   entityType       MentionType
   membershipKey    String
   displayLabel     String
   resolutionStatus ResolutionStatus
   confidence       Float
-  active           Boolean            @default(true)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  active           Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
   sources          EntitySourceLink[]
+  outgoing         DerivedRelationship[] @relation("RelationshipSource")
+  incoming         DerivedRelationship[] @relation("RelationshipTarget")
 
   @@unique([caseId, membershipKey])
   @@unique([id, caseId])
@@ -644,4 +657,129 @@ model ResolutionHistory {
   @@unique([caseId, idempotencyKey])
   @@index([caseId, sequence])
   @@map("resolution_history")
+}
+
+// Merged Phase 5+6: evidence-bound derived metadata; Neo4j is rebuildable.
+model DerivedRelationship {
+  id               String          @id @default(uuid())
+  caseId           String
+  case             Case            @relation(fields: [caseId], references: [id])
+  stableKey        String
+  sourceId         String
+  source           CanonicalEntity @relation("RelationshipSource", fields: [sourceId, caseId], references: [id, caseId])
+  targetId         String
+  target           CanonicalEntity @relation("RelationshipTarget", fields: [targetId, caseId], references: [id, caseId])
+  type             String
+  direction        String          @default("DIRECTED")
+  findingKind      String
+  confidence       Float
+  strength         Float
+  occurredAt       DateTime?
+  observedAt       DateTime?
+  endAt            DateTime?
+  sourceSystem     String
+  sourceRecordIds  Json
+  evidenceRefs     Json
+  extractionMethod String
+  algorithmVersion String
+  attributes       Json
+  active           Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  signalSupports   SignalSupport[]
+
+  @@unique([caseId, stableKey])
+  @@unique([id, caseId])
+  @@index([caseId, active, type, occurredAt])
+  @@map("derived_relationships")
+}
+
+model GraphSyncState {
+  caseId       String    @id
+  case         Case      @relation(fields: [caseId], references: [id])
+  status       String
+  sourceDigest String?
+  graphDigest  String?
+  syncedAt     DateTime?
+  error        String?
+  updatedAt    DateTime  @updatedAt
+
+  @@map("graph_sync_states")
+}
+
+model AnalysisRun {
+  id               String             @id @default(uuid())
+  caseId           String
+  case             Case               @relation(fields: [caseId], references: [id])
+  actorId          String
+  actor            User               @relation(fields: [actorId], references: [id])
+  type             String
+  inputDigest      String
+  algorithmVersion String
+  parameters       Json
+  status           String
+  startedAt        DateTime           @default(now())
+  completedAt      DateTime?
+  summary          Json
+  error            String?
+  signals          AnalyticalSignal[]
+
+  @@unique([id, caseId])
+  @@index([caseId, type, startedAt])
+  @@map("analysis_runs")
+}
+
+model AnalyticalSignal {
+  id               String          @id @default(uuid())
+  caseId           String
+  case             Case            @relation(fields: [caseId], references: [id])
+  stableKey        String
+  runId            String
+  run              AnalysisRun     @relation(fields: [runId, caseId], references: [id, caseId])
+  type             String
+  findingKind      String          @default("SIGNAL")
+  entityIds        Json
+  strength         Float
+  confidence       Float
+  timeFrom         DateTime?
+  timeTo           DateTime?
+  rule             String
+  algorithmVersion String
+  parameters       Json
+  reason           Json
+  evidenceRefs     Json
+  status           String          @default("UNREVIEWED")
+  active           Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  supports         SignalSupport[]
+
+  @@unique([caseId, stableKey])
+  @@unique([id, caseId])
+  @@index([caseId, active, type])
+  @@map("analytical_signals")
+}
+
+model SignalSupport {
+  caseId         String
+  signalId       String
+  signal         AnalyticalSignal    @relation(fields: [signalId, caseId], references: [id, caseId])
+  relationshipId String
+  relationship   DerivedRelationship @relation(fields: [relationshipId, caseId], references: [id, caseId])
+
+  @@id([signalId, relationshipId])
+  @@map("signal_supports")
+}
+
+model BrainEvent {
+  id          String    @id @default(uuid())
+  sequence    Int       @unique @default(autoincrement())
+  caseId      String
+  case        Case      @relation(fields: [caseId], references: [id])
+  type        String
+  payload     Json
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([caseId, sequence])
+  @@map("brain_events")
 }

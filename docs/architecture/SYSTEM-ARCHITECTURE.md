@@ -452,3 +452,7 @@ Real CCTNS/ICJS/CDR integrations; advanced ML resolution; Govt SSO; production b
 ## Change Control
 
 Modifications to this document require explicit architectural review. See [ARCHITECTURE-DECISIONS.md](./ARCHITECTURE-DECISIONS.md) for decision log.
+
+**Implementation status (2026-09-21):** The original Phase 5 and Phase 6 are complete as the approved combined
+Merged Phase 5+6 delivery. The graph remains derived from evidence-bound PostgreSQL records, and the analytics
+produce neutral structured signals. Phase 7 explainability/RAG, Phase 8 UI and Phase 9 integrity work have not started.
