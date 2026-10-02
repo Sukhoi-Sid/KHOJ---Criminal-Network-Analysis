@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { hashJson as hash } from '../../core/json';
 import type { IntelligenceRegistry } from './registry';
 import { intelligenceRegistry } from './registry';
 
@@ -20,7 +20,7 @@ export interface GapCandidate {
   priority: 'HIGH' | 'MEDIUM' | 'LOW'; priorityReason: string; explanation: string;
   origins: ContextMention[];
 }
-export const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+export { hash };
 
 export function parseMentionDate(raw: string): Date | null {
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);

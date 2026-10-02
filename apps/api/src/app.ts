@@ -11,6 +11,7 @@ import { mentionRouter } from './modules/document-intelligence/mention.routes';
 import { registerCaseIntelligenceStateSubscriber } from './modules/case-platform/intelligence-state.subscriber';
 import { errorMiddleware } from './middleware/error.middleware';
 import { intelligenceRouter } from './modules/intelligence-requirements/intelligence.routes';
+import { resolutionRouter } from './modules/entity-resolution/resolution.routes';
 
 export function createApp(): Express {
   registerCaseIntelligenceStateSubscriber();
@@ -43,6 +44,7 @@ export function createApp(): Express {
   // + /mentions under the same prefix.
   app.use('/api', mentionRouter);
   app.use('/api', intelligenceRouter);
+  app.use('/api', resolutionRouter);
 
   // Must be registered last — express-async-errors forwards thrown/rejected
   // errors from async route handlers here.

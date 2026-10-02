@@ -12,7 +12,8 @@
     "test": "tsx scripts/prepare-test-db.ts && vitest run",
     "test:prepare": "tsx scripts/prepare-test-db.ts",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.check.json",
-    "demo:phase3": "tsx prisma/demo-phase3.ts"
+    "demo:phase3": "tsx prisma/demo-phase3.ts",
+    "demo:phase4": "tsx prisma/demo-phase4.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.3.1",

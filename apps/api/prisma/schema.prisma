@@ -40,6 +40,7 @@ model User {
   createdRequests    IntelligenceRequest[]       @relation("RequestCreator")
   authorizations     IntelligenceAuthorization[]
   requestTransitions IntelligenceTransition[]
+  resolutionHistory  ResolutionHistory[]
 
   @@map("users")
 }
@@ -87,6 +88,10 @@ model Case {
   contextAnalysis      CaseContextAnalysis?
   intelligenceGaps     IntelligenceGap[]
   intelligenceRequests IntelligenceRequest[]
+  normalizedRecords    NormalizedSourceRecord[]
+  canonicalEntities    CanonicalEntity[]
+  resolutionCandidates ResolutionCandidate[]
+  resolutionHistory    ResolutionHistory[]
 
   @@map("cases")
 }
@@ -141,6 +146,9 @@ enum AuditAction {
   intelligence_review
   intelligence_request_create
   intelligence_transition
+  entity_integrate
+  entity_read
+  entity_review
 }
 
 enum AuditResourceType {
@@ -152,6 +160,8 @@ enum AuditResourceType {
   session
   intelligence_gap
   intelligence_request
+  canonical_entity
+  resolution_candidate
 }
 
 model AuditEvent {
@@ -214,9 +224,10 @@ model Document {
   processedAt      DateTime?
   extractedPages   Json?
 
-  evidenceRecords EvidenceRecord[]
-  mentions        Mention[]
-  gapOrigins      IntelligenceGapOrigin[]
+  evidenceRecords   EvidenceRecord[]
+  mentions          Mention[]
+  gapOrigins        IntelligenceGapOrigin[]
+  normalizedRecords NormalizedSourceRecord[]
 
   @@index([caseId])
   @@map("documents")
@@ -238,6 +249,7 @@ model EvidenceRecord {
   mentions             Mention[]
   gapOrigins           IntelligenceGapOrigin[]
   intelligenceResponse IntelligenceResponse?
+  normalizedRecords    NormalizedSourceRecord[]
 
   @@index([caseId])
   @@map("evidence_records")
@@ -302,16 +314,17 @@ model Mention {
   evidenceRecordId String?
   evidenceRecord   EvidenceRecord? @relation(fields: [evidenceRecordId], references: [id])
 
-  mentionType      MentionType
-  text             String
-  normalizedText   String?
-  confidence       Float
-  pageNumber       Int?
-  startOffset      Int?
-  endOffset        Int?
-  extractionMethod ExtractionMethod        @default(regex)
-  extractedAt      DateTime                @default(now())
-  gapOrigins       IntelligenceGapOrigin[]
+  mentionType       MentionType
+  text              String
+  normalizedText    String?
+  confidence        Float
+  pageNumber        Int?
+  startOffset       Int?
+  endOffset         Int?
+  extractionMethod  ExtractionMethod         @default(regex)
+  extractedAt       DateTime                 @default(now())
+  gapOrigins        IntelligenceGapOrigin[]
+  normalizedRecords NormalizedSourceRecord[]
 
   @@index([caseId])
   @@index([documentId])
@@ -465,13 +478,14 @@ model IntelligenceAuthorization {
 }
 
 model IntelligenceResponse {
-  id               String              @id @default(uuid())
-  requestId        String              @unique
-  request          IntelligenceRequest @relation(fields: [requestId], references: [id])
-  evidenceRecordId String              @unique
-  evidenceRecord   EvidenceRecord      @relation(fields: [evidenceRecordId], references: [id])
-  receiptKey       String              @unique
-  retrievedAt      DateTime            @default(now())
+  id                String                   @id @default(uuid())
+  requestId         String                   @unique
+  request           IntelligenceRequest      @relation(fields: [requestId], references: [id])
+  evidenceRecordId  String                   @unique
+  evidenceRecord    EvidenceRecord           @relation(fields: [evidenceRecordId], references: [id])
+  receiptKey        String                   @unique
+  retrievedAt       DateTime                 @default(now())
+  normalizedRecords NormalizedSourceRecord[]
 
   @@map("intelligence_responses")
 }
@@ -491,4 +505,143 @@ model IntelligenceTransition {
 
   @@index([requestId, createdAt])
   @@map("intelligence_transitions")
+}
+
+// Phase 4 is a derived, reversible grouping layer, not authoritative evidence.
+// Reuse MentionType: money means an identified financial identifier here, never an amount.
+enum NormalizedSourceKind {
+  MENTION
+  RETURNED_INTELLIGENCE
+  CASE_METADATA
+}
+
+enum ResolutionStatus {
+  UNRESOLVED
+  REVIEW_REQUIRED
+  AUTO_RESOLVED
+  ACCEPTED
+  DISTINCT
+  REJECTED
+}
+
+model NormalizedSourceRecord {
+  id               String                @id @default(uuid())
+  caseId           String
+  case             Case                  @relation(fields: [caseId], references: [id])
+  sourceKey        String
+  entityType       MentionType
+  rawValue         String
+  normalizedValue  String
+  validIdentifier  Boolean               @default(false)
+  sourceKind       NormalizedSourceKind
+  sourceId         String?
+  department       String?
+  documentId       String?
+  document         Document?             @relation(fields: [documentId], references: [id])
+  evidenceRecordId String?
+  evidenceRecord   EvidenceRecord?       @relation(fields: [evidenceRecordId], references: [id])
+  mentionId        String?
+  mention          Mention?              @relation(fields: [mentionId], references: [id], onDelete: SetNull)
+  responseId       String?
+  response         IntelligenceResponse? @relation(fields: [responseId], references: [id])
+  confidence       Float
+  reliabilityTier  ReliabilityTier
+  attributes       Json
+  identifiers      Json
+  sourceLocation   Json
+  sourceTimestamp  DateTime
+  active           Boolean               @default(true)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  entityLinks      EntitySourceLink[]
+  leftCandidates   ResolutionCandidate[] @relation("LeftRecord")
+  rightCandidates  ResolutionCandidate[] @relation("RightRecord")
+
+  @@unique([caseId, sourceKey])
+  @@unique([id, caseId])
+  @@index([caseId, active, entityType, normalizedValue])
+  @@map("normalized_source_records")
+}
+
+model CanonicalEntity {
+  id               String             @id @default(uuid())
+  caseId           String
+  case             Case               @relation(fields: [caseId], references: [id])
+  entityType       MentionType
+  membershipKey    String
+  displayLabel     String
+  resolutionStatus ResolutionStatus
+  confidence       Float
+  active           Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  sources          EntitySourceLink[]
+
+  @@unique([caseId, membershipKey])
+  @@unique([id, caseId])
+  @@index([caseId, active, entityType])
+  @@map("canonical_entities")
+}
+
+model EntitySourceLink {
+  id        String                 @id @default(uuid())
+  caseId    String
+  entityId  String
+  entity    CanonicalEntity        @relation(fields: [entityId, caseId], references: [id, caseId])
+  recordId  String
+  record    NormalizedSourceRecord @relation(fields: [recordId, caseId], references: [id, caseId])
+  createdAt DateTime               @default(now())
+
+  @@unique([entityId, recordId])
+  @@index([caseId, recordId])
+  @@map("entity_source_links")
+}
+
+model ResolutionCandidate {
+  id          String                 @id @default(uuid())
+  caseId      String
+  case        Case                   @relation(fields: [caseId], references: [id])
+  leftId      String
+  left        NormalizedSourceRecord @relation("LeftRecord", fields: [leftId, caseId], references: [id, caseId])
+  rightId     String
+  right       NormalizedSourceRecord @relation("RightRecord", fields: [rightId, caseId], references: [id, caseId])
+  score       Float
+  signals     Json
+  conflicts   Json
+  ruleVersion String
+  status      ResolutionStatus
+  revision    Int                    @default(1)
+  active      Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  history     ResolutionHistory[]
+
+  @@unique([caseId, leftId, rightId])
+  @@unique([id, caseId])
+  @@index([caseId, active, status])
+  @@map("resolution_candidates")
+}
+
+// Resolution decision history also retains delivery state for the EXISTING event bus.
+model ResolutionHistory {
+  id             String               @id @default(uuid())
+  sequence       Int                  @unique @default(autoincrement())
+  caseId         String
+  case           Case                 @relation(fields: [caseId], references: [id])
+  candidateId    String?
+  candidate      ResolutionCandidate? @relation(fields: [candidateId, caseId], references: [id, caseId])
+  actorId        String
+  actor          User                 @relation(fields: [actorId], references: [id])
+  idempotencyKey String?
+  eventType      String
+  fromStatus     ResolutionStatus?
+  toStatus       ResolutionStatus?
+  reason         String
+  payload        Json
+  publishedAt    DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@unique([caseId, idempotencyKey])
+  @@index([caseId, sequence])
+  @@map("resolution_history")
 }

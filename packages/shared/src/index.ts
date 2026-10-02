@@ -25,10 +25,14 @@ export enum Permission {
   SOURCE_VEHICLE = 'source:vehicle',
   SOURCE_LOCATION = 'source:location',
   SOURCE_CYBER = 'source:cyber',
+  ENTITY_READ = 'entity:read',
+  ENTITY_RESOLVE = 'entity:resolve',
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.INVESTIGATOR]: [
+    Permission.ENTITY_READ,
+    Permission.ENTITY_RESOLVE,
     Permission.CASE_CREATE,
     Permission.CASE_READ,
     Permission.CASE_UPDATE,
@@ -44,6 +48,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.SOURCE_CYBER,
   ],
   [UserRole.SUPERVISOR]: [
+    Permission.ENTITY_READ,
+    Permission.ENTITY_RESOLVE,
     Permission.CASE_CREATE,
     Permission.CASE_READ,
     Permission.CASE_UPDATE,
@@ -106,6 +112,9 @@ export enum AuditAction {
   INTELLIGENCE_REVIEW = 'intelligence_review',
   INTELLIGENCE_REQUEST_CREATE = 'intelligence_request_create',
   INTELLIGENCE_TRANSITION = 'intelligence_transition',
+  ENTITY_INTEGRATE = 'entity_integrate',
+  ENTITY_READ = 'entity_read',
+  ENTITY_REVIEW = 'entity_review',
 }
 
 export enum AuditResourceType {
@@ -117,6 +126,8 @@ export enum AuditResourceType {
   SESSION = 'session',
   INTELLIGENCE_GAP = 'intelligence_gap',
   INTELLIGENCE_REQUEST = 'intelligence_request',
+  CANONICAL_ENTITY = 'canonical_entity',
+  RESOLUTION_CANDIDATE = 'resolution_candidate',
 }
 
 // ─── Evidence Store ────────────────────────────────────────────────────────
@@ -346,3 +357,19 @@ export interface IntelligenceRequestDto {
 export interface ReviewIntelligenceGapRequest { decision: 'select' | 'dismiss'; note: string }
 export interface CreateIntelligenceRequest { gapId: string }
 export interface AuthorizeIntelligenceRequest { approved: boolean; reason: string }
+
+// Phase 4 reuses MentionType. MONEY is accepted only for an identified account/payment identifier.
+export const ENTITY_TYPES = [MentionType.PERSON, MentionType.PHONE, MentionType.VEHICLE, MentionType.MONEY,
+  MentionType.LOCATION, MentionType.ORGANIZATION, MentionType.CASE_IDENTIFIER] as const;
+export type EntityType = typeof ENTITY_TYPES[number];
+export type ResolutionStatus = 'UNRESOLVED' | 'REVIEW_REQUIRED' | 'AUTO_RESOLVED' | 'ACCEPTED' | 'DISTINCT' | 'REJECTED';
+export type IdentifierKind = 'phone' | 'dob' | 'address' | 'governmentId' | 'account' | 'vehicle' | 'organization' | 'bank';
+export type EntityIdentifiers = Partial<Record<IdentifierKind, string[]>>;
+export interface ResolutionSignal { field: string; strength: 'strong' | 'supporting' | 'conflict'; detail: string }
+export interface ResolutionReviewRequest {
+  decision: 'accept' | 'reject'; reason: string; expectedRevision: number; idempotencyKey: string;
+}
+export interface CanonicalEntityDto {
+  id: string; caseId: string; entityType: EntityType; displayLabel: string; active: boolean;
+  resolutionStatus: ResolutionStatus; confidence: number; createdAt: string; updatedAt: string;
+}

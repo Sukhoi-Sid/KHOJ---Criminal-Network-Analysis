@@ -13,7 +13,8 @@
     "db:setup": "pnpm db:generate && pnpm db:migrate && pnpm db:seed",
     "test": "pnpm --filter @sih/shared build && pnpm --filter @sih/api test",
     "typecheck": "pnpm --filter @sih/shared build && pnpm --filter @sih/api typecheck",
-    "demo:phase3": "pnpm --filter @sih/api demo:phase3"
+    "demo:phase3": "pnpm --filter @sih/api demo:phase3",
+    "demo:phase4": "pnpm --filter @sih/api demo:phase4"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

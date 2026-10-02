@@ -1,6 +1,43 @@
 import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../../core/db';
 import { ForbiddenError, NotFoundError, UnauthorizedError } from '../../core/errors';
+import { AuditAction, AuditResourceType, Permission, ROLE_PERMISSIONS, UserRole } from '@sih/shared';
+import type { AuthenticatedUser } from '../../middleware/auth.middleware';
+import { auditService } from '../audit/audit.service';
+import { intelligenceRegistry } from '../intelligence-requirements/registry';
+
+export interface CaseActor extends AuthenticatedUser { ipAddress?: string }
+
+export async function auditAccessDenied(actor: CaseActor) {
+  const exists = await prisma.user.findUnique({ where: { id: actor.id }, select: { id: true } });
+  await auditService.emit({ actorId: exists?.id, actorEmail: actor.email, action: AuditAction.ACCESS_DENIED,
+    resourceType: AuditResourceType.CASE, ipAddress: actor.ipAddress });
+}
+
+/** Shared Phase 3/4 role + case gate. Phase 1/2 HTTP contracts remain unchanged. */
+export async function assertCasePermission(caseId: string, actor: CaseActor, permission: Permission) {
+  const user = await prisma.user.findUnique({ where: { id: actor.id } });
+  if (!user || user.role !== actor.role || !ROLE_PERMISSIONS[user.role as UserRole]?.includes(permission)) {
+    await auditAccessDenied(actor);
+    throw new ForbiddenError('Case permission required');
+  }
+  try { await assertCaseAccess(actor.id, caseId); }
+  catch (error) {
+    if (!(error instanceof NotFoundError || error instanceof ForbiddenError)) throw error;
+    await auditAccessDenied(actor);
+    throw new NotFoundError('Case not found');
+  }
+}
+
+export function canUseSource(sourceId: string, actor: CaseActor) {
+  return intelligenceRegistry.sources.some(s => s.id === sourceId && ROLE_PERMISSIONS[actor.role].includes(s.permission));
+}
+export async function assertSourceAccess(sourceId: string, actor: CaseActor) {
+  if (!canUseSource(sourceId, actor)) {
+    await auditAccessDenied(actor);
+    throw new ForbiddenError('Source permission required');
+  }
+}
 
 /**
  * ABAC rule (Blueprint §10): a user may access a case only if they hold a

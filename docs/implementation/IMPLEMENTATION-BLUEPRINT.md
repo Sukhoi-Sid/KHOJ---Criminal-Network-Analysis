@@ -488,4 +488,10 @@ Do not over-engineer multilingual OCR in MVP; preserve interface and provenance 
 
 ## Change Control
 
+**Phase 4 implementation status (2026-09-18):** The existing `entity-resolution` boundary now implements
+source normalization, type-specific candidate blocking/comparison, canonical case entities, reversible accept/reject
+review, source provenance and versioned case-state summaries. It reuses Phase 1–3 auth, audit, evidence store,
+source adapters, Prisma client and event bus. All 107 tests pass. This is a status mapping, not a change to the frozen
+architecture or phase order. See [Phase 4 implementation and rules](PHASE-4-STATUS.md). Phase 5 has not started.
+
 Modifications require explicit review. See [IMPLEMENTATION-DECISIONS.md](./IMPLEMENTATION-DECISIONS.md).

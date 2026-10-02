@@ -1,4 +1,5 @@
 import { MentionType } from '@sih/shared';
+import { normalizePhone, normalizeVehicle } from '../../core/identifier-normalization';
 
 export interface ExtractedMentionCandidate {
   mentionType: MentionType;
@@ -34,8 +35,8 @@ interface Matcher {
 const PHONE: Matcher = {
   mentionType: MentionType.PHONE,
   confidence: 0.9,
-  regex: /\b(?:\+91[-\s]?)?[6-9]\d{9}\b/g,
-  normalize: (raw) => raw.replace(/[^\d]/g, '').replace(/^91(?=\d{10}$)/, ''),
+  regex: /(?<!\w)(?:(?:\+91|0091)[ -]?)?0?[6-9]\d{4}[ -]?\d{5}\b/g,
+  normalize: (raw) => normalizePhone(raw) ?? undefined,
 };
 
 const VEHICLE: Matcher = {
@@ -43,7 +44,7 @@ const VEHICLE: Matcher = {
   confidence: 0.85,
   // Indian registration format: MP 09 AB 1234 (separators optional)
   regex: /\b[A-Z]{2}[-\s]?\d{1,2}[-\s]?[A-Z]{1,3}[-\s]?\d{4}\b/g,
-  normalize: (raw) => raw.replace(/[\s-]/g, '').toUpperCase(),
+  normalize: (raw) => normalizeVehicle(raw) ?? undefined,
 };
 
 const DATE_NUMERIC: Matcher = {

@@ -42,7 +42,8 @@ The system supports investigators. It does not replace investigative or legal de
 | Phase 1 — Foundation & Secure Case System | ✅ Implemented + security-fixed — see [docs/implementation/PHASE-1-STATUS.md](./docs/implementation/PHASE-1-STATUS.md) |
 | Phase 2 — FIR & Document Intelligence | Implemented and regression-tested against PostgreSQL — see [Phase 2 status](./docs/implementation/PHASE-2-STATUS.md) |
 | Phase 3 — Intelligence Requirement & Data Exchange | Implemented: rule-based case context, explainable gaps, review, supervisor authorization, six synthetic adapters, audit and provenance — see [Phase 3 status and API guide](./docs/implementation/PHASE-3-STATUS.md) |
-| Phases 4–9 | Planned; not implemented |
+| Phase 4 — Data Integration & Entity Resolution | Implemented: normalized sources, canonical case entities, explainable matching, reversible review and provenance — see [Phase 4 guide](./docs/implementation/PHASE-4-STATUS.md) |
+| Phases 5–9 | Planned; not implemented |
 
 ## Run the current project
 
@@ -66,6 +67,7 @@ The repository currently contains an API and shared contracts. The command-cente
 pnpm typecheck
 pnpm test
 pnpm demo:phase3
+pnpm demo:phase4
 ```
 
 Tests create/migrate a separate database ending in `_test` and clear only its application tables.

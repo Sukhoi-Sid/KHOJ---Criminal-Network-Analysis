@@ -1,10 +1,10 @@
 import { Prisma, type IntelligenceRequestStatus } from '@prisma/client';
-import { AuditAction, AuditResourceType, Permission, ROLE_PERMISSIONS, UserRole } from '@sih/shared';
+import { AuditAction, AuditResourceType, Permission } from '@sih/shared';
 import { prisma } from '../../core/db';
 import { eventBus } from '../../core/domain-events';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../core/errors';
 import { auditService } from '../audit/audit.service';
-import { assertCaseAccess } from '../auth/policies';
+import { assertCasePermission, assertSourceAccess, auditAccessDenied, canUseSource, type CaseActor } from '../auth/policies';
 import { getDocumentProcessor, type ExtractedPage } from '../document-intelligence/processors';
 import { evidenceStoreService } from '../evidence-store/evidence.service';
 import { exchangeSynthetic, type RequestScope } from '../data-exchange/adapters';
@@ -12,42 +12,27 @@ import { analyzeContext, type CaseContext } from './engine';
 import { intelligenceRegistry } from './registry';
 import { IntelligenceEvents as Events } from './events';
 
-export interface IntelligenceActor { id: string; email: string; role: UserRole; ipAddress?: string }
-const json = (v: unknown) => JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
+export type IntelligenceActor = CaseActor;
+import { toJson as json } from '../../core/json';
 const gapInclude = { source: true, origins: true } as const;
 const requestInclude = { source: true, authorization: true, response: { include: { evidenceRecord: { include: { provenance: true } } } }, transitions: { orderBy: { sequence: 'asc' as const } } } as const;
 
 export class IntelligenceService {
   /** Uses the existing ABAC primitive, masking existence consistently for Phase 3. */
   async access(caseId: string, actor: IntelligenceActor, permission: Permission) {
-    const user = await prisma.user.findUnique({ where: { id: actor.id } });
-    if (!user || user.role !== actor.role || !ROLE_PERMISSIONS[user.role as UserRole]?.includes(permission)) {
-      await this.denied(actor);
-      throw new ForbiddenError('Intelligence permission required');
-    }
-    try { await assertCaseAccess(actor.id, caseId); }
-    catch (error) {
-      if (!(error instanceof NotFoundError || error instanceof ForbiddenError)) throw error;
-      await this.denied(actor);
-      throw new NotFoundError('Case not found');
-    }
+    await assertCasePermission(caseId, actor, permission);
   }
 
   private async denied(actor: IntelligenceActor) {
-    await auditService.emit({ actorId: actor.id, actorEmail: actor.email, action: AuditAction.ACCESS_DENIED,
-      resourceType: AuditResourceType.INTELLIGENCE_REQUEST, ipAddress: actor.ipAddress,
-      metadata: { module: 'intelligence-requirements' } });
+    await auditAccessDenied(actor);
   }
 
   private async sourceAccess(sourceId: string, actor: IntelligenceActor) {
-    if (!this.canUseSource(sourceId, actor)) {
-      await this.denied(actor);
-      throw new ForbiddenError('Source permission required');
-    }
+    await assertSourceAccess(sourceId, actor);
   }
 
   private canUseSource(sourceId: string, actor: IntelligenceActor) {
-    return intelligenceRegistry.sources.some(s => s.id === sourceId && ROLE_PERMISSIONS[actor.role].includes(s.permission));
+    return canUseSource(sourceId, actor);
   }
 
   private async locked<T>(caseId: string, work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

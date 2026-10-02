@@ -3,6 +3,20 @@ import { prisma } from '../../core/db';
 import { DocumentIntelligenceEvents } from '../document-intelligence/events';
 import type { ExtractionCompletedPayload } from '../document-intelligence/events';
 import { Prisma } from '@prisma/client';
+import { ResolutionEvents } from '../entity-resolution/events';
+
+// Case platform remains the only owner of the versioned state. Row locking
+// prevents document and resolution events from overwriting each other's sections.
+async function updateSummary(caseId: string, transform: (summary: Record<string,unknown>) => Record<string,unknown> | null) {
+  await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM case_intelligence_states WHERE "caseId" = ${caseId} FOR UPDATE`;
+    const state = await tx.caseIntelligenceState.findUnique({ where: { caseId } });
+    if (!state) return;
+    const summary = transform((state.summary as Record<string,unknown>) ?? {});
+    if (!summary) return;
+    await tx.caseIntelligenceState.update({ where: { caseId },data: { version: { increment: 1 },summary: summary as Prisma.InputJsonValue } });
+  });
+}
 
 /**
  * `case-platform` owns `CaseIntelligenceState` (module ownership table,
@@ -23,26 +37,24 @@ export function registerCaseIntelligenceStateSubscriber(): void {
   }
   subscribed = true;
 
+  eventBus.subscribe(ResolutionEvents.COMPLETED, {
+    async handle(event: DomainEvent) {
+      const payload = event.payload;
+      await updateSummary(String(payload.caseId), summary => {
+        const previous = summary.entityResolution as { sequence?: number } | undefined;
+        if ((previous?.sequence ?? -1) >= Number(payload.sequence)) return null;
+        return { ...summary,entityResolution: { ...payload,lastCompletedAt: new Date(event.timestamp).toISOString() } };
+      });
+    },
+  });
+
   eventBus.subscribe(DocumentIntelligenceEvents.EXTRACTION_COMPLETED, {
     async handle(event: DomainEvent) {
       const payload = event.payload as unknown as ExtractionCompletedPayload;
 
-      const state = await prisma.caseIntelligenceState.findUnique({ where: { caseId: payload.caseId } });
-      if (!state) {
-        // Defensive only — every Case gets a CaseIntelligenceState at
-        // creation time (case.service.ts). Don't fail the extraction
-        // request over a missing summary row.
-        return;
-      }
-
-      const summary = (state.summary as Record<string, unknown>) ?? {};
+      await updateSummary(payload.caseId, summary => {
       const documents = (summary.documents as Record<string, unknown>) ?? {};
-
-      await prisma.caseIntelligenceState.update({
-        where: { caseId: payload.caseId },
-        data: {
-          version: { increment: 1 },
-          summary: {
+      return {
             ...summary,
             documents: {
               ...documents,
@@ -52,8 +64,7 @@ export function registerCaseIntelligenceStateSubscriber(): void {
                 lastExtractedAt: new Date().toISOString(),
               },
             },
-          }as Prisma.InputJsonValue,
-        },
+          };
       });
     },
   });

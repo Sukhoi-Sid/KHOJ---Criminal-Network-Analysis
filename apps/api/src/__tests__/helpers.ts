@@ -13,6 +13,11 @@ export async function resetDb(): Promise<void> {
     throw new Error('Refusing to clear a non-test database');
   }
   await prisma.$transaction([
+    prisma.resolutionHistory.deleteMany(),
+    prisma.resolutionCandidate.deleteMany(),
+    prisma.entitySourceLink.deleteMany(),
+    prisma.canonicalEntity.deleteMany(),
+    prisma.normalizedSourceRecord.deleteMany(),
     prisma.intelligenceTransition.deleteMany(),
     prisma.intelligenceResponse.deleteMany(),
     prisma.intelligenceAuthorization.deleteMany(),
