@@ -98,13 +98,20 @@ and consistency checks, network/path/community analytics, temporal analysis, exp
 signals, analysis runs, audit and case-state events. Evidence and PostgreSQL remain authoritative. Phases 7–9
 remain unimplemented. All 134 Phase 1–6 tests pass against real PostgreSQL and Neo4j.
 
+Phase 7 adds authorized investigative retrieval and explanation over the existing evidence, entities, graph,
+timeline, metrics and signals. It returns categorized grounded claims and traceable citations, audits queries without
+storing raw question text, and falls back deterministically when a configured answer provider fails. No parallel
+evidence store or vector database was added. Phases 8–9 remain unimplemented. The complete Phase 1–7 suite has 156 tests.
+
 - [Phase 1 status](implementation/PHASE-1-STATUS.md)
 - [Phase 2 status](implementation/PHASE-2-STATUS.md)
 - [Phase 3 implementation, API, demo and verification](implementation/PHASE-3-STATUS.md)
 - [Phase 4 implementation, rules, API, demo and verification](implementation/PHASE-4-STATUS.md)
 - [Merged Phase 5+6 implementation, graph, analytics, API and verification](implementation/MERGED-PHASE-5-6-STATUS.md)
+- [Phase 7 retrieval, grounding, citations, security and verification](implementation/PHASE-7-STATUS.md)
 - [D8 implementation decision](implementation/IMPLEMENTATION-DECISIONS.md#d8--phase-3-case-type-requirements-2026-09-17)
 - [D9 merged implementation decision](implementation/IMPLEMENTATION-DECISIONS.md#d9--merged-phase-56-2026-09-21)
+- [D10 Phase 7 retrieval decision](implementation/IMPLEMENTATION-DECISIONS.md#d10--phase-7-grounded-retrieval-2026-09-21)
 
 ## Related
 

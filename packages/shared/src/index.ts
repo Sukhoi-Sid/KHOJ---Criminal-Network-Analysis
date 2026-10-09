@@ -1,5 +1,6 @@
 // ─── Roles & Permissions ───────────────────────────────────────────────────
 export * from './brain';
+export * from './rag';
 
 export enum UserRole {
   INVESTIGATOR = 'investigator',

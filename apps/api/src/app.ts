@@ -14,6 +14,7 @@ import { intelligenceRouter } from './modules/intelligence-requirements/intellig
 import { resolutionRouter } from './modules/entity-resolution/resolution.routes';
 import { brainRouter } from './modules/intelligence-brain/brain.routes';
 import { checkGraphConnection } from './core/neo4j';
+import { ragRouter } from './modules/investigative-rag/rag.routes';
 
 export function createApp(): Express {
   registerCaseIntelligenceStateSubscriber();
@@ -48,6 +49,7 @@ export function createApp(): Express {
   app.use('/api', intelligenceRouter);
   app.use('/api', resolutionRouter);
   app.use('/api', brainRouter);
+  app.use('/api', ragRouter);
   app.get('/health/graph',async (_req,res)=>{const connected=await checkGraphConnection();res.status(connected?200:503).json({status:connected?'ok':'error',neo4j:connected?'connected':'unavailable'});});
 
   // Must be registered last — express-async-errors forwards thrown/rejected

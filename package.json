@@ -15,7 +15,8 @@
     "typecheck": "pnpm --filter @sih/shared build && pnpm --filter @sih/api typecheck",
     "demo:phase3": "pnpm --filter @sih/api demo:phase3",
     "demo:phase4": "pnpm --filter @sih/api demo:phase4",
-    "demo:merged": "pnpm --filter @sih/api demo:merged"
+    "demo:merged": "pnpm --filter @sih/api demo:merged",
+    "demo:phase7": "pnpm --filter @sih/api demo:phase7"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

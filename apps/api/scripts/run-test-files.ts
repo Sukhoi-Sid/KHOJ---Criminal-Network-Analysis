@@ -2,8 +2,8 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 
-// Node 24 on Windows can terminate Vitest's default worker during an
-// integration-heavy file. A fresh VM-thread process per file preserves
+// Node 24 on Windows can terminate Vitest's thread worker during an
+// integration-heavy file. A fresh forked process per file preserves
 // isolation and every assertion while avoiding that runtime issue.
 const apiRoot = path.resolve(__dirname, '..');
 const testsRoot = path.join(apiRoot, 'src', '__tests__');
@@ -23,7 +23,7 @@ const testFiles = readdirSync(testsRoot)
 for (const testFile of testFiles) {
   const result = spawnSync(
     process.execPath,
-    [vitestEntry, 'run', testFile, '--pool=vmThreads', '--maxWorkers=1'],
+    [vitestEntry, 'run', testFile, '--pool=forks', '--maxWorkers=1'],
     { cwd: apiRoot, env: process.env, stdio: 'inherit' },
   );
   if (result.error) throw result.error;

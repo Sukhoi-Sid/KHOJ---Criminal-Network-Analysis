@@ -500,4 +500,9 @@ original Phase 5 and Phase 6 scope without changing their architecture or order.
 events and case state. PostgreSQL persists derived relationship/signal metadata and Neo4j remains a rebuildable,
 case-scoped analytical projection. See [Merged Phase 5+6 status](MERGED-PHASE-5-6-STATUS.md). Phases 7–9 have not started.
 
+**Phase 7 implementation status (2026-09-21):** The `investigative-rag` boundary routes authorized questions to
+existing evidence/entity/graph/temporal/signal owners and composes categorized answers with structured citations.
+Provider failure returns deterministic grounded output. No vector store, frontend, blockchain or autonomous action was
+added. See [Phase 7 status](PHASE-7-STATUS.md). Phases 8–9 have not started.
+
 Modifications require explicit review. See [IMPLEMENTATION-DECISIONS.md](./IMPLEMENTATION-DECISIONS.md).

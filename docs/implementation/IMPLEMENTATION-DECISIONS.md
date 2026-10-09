@@ -78,6 +78,7 @@ Future implementations plug in without changing case platform or brain:
 | 2026-09 | D2–D6 | Blueprint decisions locked at freeze |
 | 2026-09 | D7 | PDF/text MVP with extensible document boundary clarified |
 | 2026-09 | D9 | Original Phase 5 and Phase 6 approved as one combined delivery with no scope reduction |
+| 2026-09 | D10 | Phase 7 uses deterministic case-scoped routing and a replaceable grounded answer provider; no MVP vector store |
 
 ---
 
@@ -100,6 +101,18 @@ This preserves the frozen pipeline and modular-monolith deployment: evidence and
 Neo4j is a derived, rebuildable analytical view. The implementation reuses Phase 1–4 canonical entities, auth,
 case ABAC, audit, provenance, domain events and case intelligence state. Application-level graph algorithms provide
 the documented fallback when Neo4j GDS is unavailable. This decision does not authorize or begin Phase 7–9.
+
+## D10 — Phase 7 grounded retrieval (2026-09-21)
+
+Phase 7 reuses the existing evidence, canonical entity, relationship, Neo4j analytics, timeline and signal stores.
+Deterministic intent routing selects those owners directly; graph algorithms are not reimplemented. The answer-provider
+interface receives only already categorized, cited claims and cannot query PostgreSQL or Neo4j. The default deterministic
+provider needs no external secret and remains useful during provider timeout or malformed output.
+
+No embeddings or vector database are introduced for the current moderate, structured synthetic corpus. Exact metadata,
+entity, relationship, timeline and signal retrieval is simpler, auditable and preserves source/page/span references.
+The boundary allows a future case-scoped embedding provider if unstructured evidence volume justifies it. Lightweight
+follow-up context is request-scoped through a verified canonical `lastEntityId`; it is not stored as intelligence.
 
 ## Change control procedure
 

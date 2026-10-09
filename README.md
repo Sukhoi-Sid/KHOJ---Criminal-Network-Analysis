@@ -44,7 +44,8 @@ The system supports investigators. It does not replace investigative or legal de
 | Phase 3 — Intelligence Requirement & Data Exchange | Implemented: rule-based case context, explainable gaps, review, supervisor authorization, six synthetic adapters, audit and provenance — see [Phase 3 status and API guide](./docs/implementation/PHASE-3-STATUS.md) |
 | Phase 4 — Data Integration & Entity Resolution | Implemented: normalized sources, canonical case entities, explainable matching, reversible review and provenance — see [Phase 4 guide](./docs/implementation/PHASE-4-STATUS.md) |
 | Merged Phase 5+6 — Brain, Graph & Analytics | Implemented: evidence-bound relationships, Neo4j sync/rebuild, network and temporal analytics, deterministic pattern signals — see [Merged Phase 5+6 status](./docs/implementation/MERGED-PHASE-5-6-STATUS.md) |
-| Phases 7–9 | Planned; not implemented |
+| Phase 7 — Explainable Intelligence & Investigative RAG | Implemented: deterministic retrieval routing, grounded categorized answers, citations, safe provider fallback and audited case-scoped APIs — see [Phase 7 status](./docs/implementation/PHASE-7-STATUS.md) |
+| Phases 8–9 | Planned; not implemented |
 
 ## Run the current project
 
@@ -71,6 +72,7 @@ pnpm test
 pnpm demo:phase3
 pnpm demo:phase4
 pnpm demo:merged
+pnpm demo:phase7
 ```
 
 Tests create/migrate a separate database ending in `_test` and clear only its application tables.
@@ -79,5 +81,5 @@ Demo data is synthetic. `db:seed` creates theft/scam gaps for review; `demo:phas
 independent supervisor approval and exchange for both scenarios. Rerunning it reuses the same requests and packages.
 The merged demo verifies scenarios A–H: centrality, bridge detection, communities, multi-hop paths,
 communication and financial patterns, temporal correlation, idempotency and rebuild consistency.
-The full regression suite contains 134 tests. The existing demo accounts use `Passw0rd!2026`:
+The full regression suite contains 156 tests. The existing demo accounts use `Passw0rd!2026`:
 `investigator@ncrb.demo` and `supervisor@ncrb.demo`.
